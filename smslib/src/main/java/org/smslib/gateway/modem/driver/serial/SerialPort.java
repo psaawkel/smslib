@@ -270,53 +270,6 @@ public class SerialPort
 	 * <CODE>getInputStream</CODE> depends on combination of the threshold and
 	 * timeout values. The possible behaviours are described in the table below:
 	 * </P>
-	 * <table border="1">
-	 * <tr>
-	 * <th colspan=2>Threshold</th>
-	 * <th colspan=2>Timeout</th>
-	 * <th rowspan=2>Read Buffer Size</th>
-	 * <th rowspan=2>Read Behaviour</th>
-	 * </tr>
-	 * <tr>
-	 * <th>State</th>
-	 * <th>Value</th>
-	 * <th>State</th>
-	 * <th>Value</th>
-	 * </tr>
-	 * <tr>
-	 * <td>disabled</td>
-	 * <td>-</td>
-	 * <td>disabled</td>
-	 * <td>-</td>
-	 * <td>n bytes</td>
-	 * <td>block until any data is available</td>
-	 * </tr>
-	 * <tr>
-	 * <td>enabled</td>
-	 * <td>m bytes</td>
-	 * <td>disabled</td>
-	 * <td>-</td>
-	 * <td>n bytes</td>
-	 * <td>block until min(<I>m</I>,<I>n</I>) bytes are available</td>
-	 * </tr>
-	 * <tr>
-	 * <td>disabled</td>
-	 * <td>-</td>
-	 * <td>enabled</td>
-	 * <td>x ms</td>
-	 * <td>n bytes</td>
-	 * <td>block for <I>x</I> ms or until any data is available</td>
-	 * </tr>
-	 * <tr>
-	 * <td>enabled</td>
-	 * <td>m bytes</td>
-	 * <td>enabled</td>
-	 * <td>x ms</td>
-	 * <td>n bytes</td>
-	 * <td>block for <I>x</I> ms or until min(<I>m</I>,<I>n</I>) bytes are
-	 * available</td>
-	 * </tr>
-	 * </table>
 	 * <P>
 	 * Note, however, that framing errors may cause the Timeout and Threshold
 	 * values to complete prematurely without raising an exception.

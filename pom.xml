@@ -154,7 +154,7 @@ Contact: admin@smslib.org</description>
 				<artifactId>maven-javadoc-plugin</artifactId>
 				<version>2.9</version>
 				<configuration>
-					<additionalparam></additionalparam>
+					<additionalparam>-Xdoclint:none</additionalparam>
 				</configuration>
 			</plugin>
 			<plugin>
