@@ -31,13 +31,16 @@ public class Settings
 
 	public static int modemPollingInterval = 15000;
 
+	public static int modemRssiPollingInterval = 60000;
+
 	public static boolean keepOutboundMessagesInQueue = true;
 
 	public static int hoursToRetainOrphanedMessageParts = 72;
 
 	public static boolean deleteMessagesAfterCallback = false;
 
-	public static void loadSettings()
+
+    public static void loadSettings()
 	{
 		if (System.getProperty("smslib.httpserver.port") != null) httpServerPort = Integer.parseInt(System.getProperty("smslib.httpserver.port"));
 		if (System.getProperty("smslib.httpserver.poolsize") != null) httpServerPoolSize = Integer.parseInt(System.getProperty("smslib.httpserver.poolsize"));

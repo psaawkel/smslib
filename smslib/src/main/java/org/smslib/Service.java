@@ -523,40 +523,48 @@ public class Service
 
 	public boolean registerGateway(AbstractGateway gateway)
 	{
+		boolean isStarted = false;
 		synchronized (this._LOCK_)
 		{
 			logger.info("Registering Gateway: " + gateway.toShortString());
 			getGateways().put(gateway.getGatewayId(), gateway);
-			if (getStatus() == Status.Started)
+			isStarted = getStatus() == Status.Started;
+		}
+		if (isStarted)
+		{
+			logger.info("Starting gateway: " + gateway.getGatewayId());
+			boolean startStatus = gateway.start();
+			if (!startStatus)
 			{
-				logger.info("Starting gateway: " + gateway.getGatewayId());
-				boolean startStatus = gateway.start();
-				if (!startStatus)
+				logger.warn(String.format("Gateway %s did not start!", gateway.getGatewayId()));
+				synchronized (this._LOCK_)
 				{
-					logger.warn(String.format("Gateway %s did not start!", gateway.getGatewayId()));
 					getGateways().remove(gateway.getGatewayId());
 				}
-				return startStatus;
 			}
-			return true;
+			return startStatus;
 		}
+		return true;
+
 	}
 
 	public boolean unregisterGateway(AbstractGateway gateway)
 	{
+		boolean shouldStop = false;
 		synchronized (this._LOCK_)
 		{
 			logger.info("Unregistering Gateway: " + gateway.toShortString());
 			getGateways().remove(gateway.getGatewayId());
-			if ((getStatus() == Status.Started) || (gateway.getStatus() == AbstractGateway.Status.Started))
-			{
-				logger.info("Stopping gateway: " + gateway.getGatewayId());
-				boolean startStatus = gateway.stop();
-				if (!startStatus) logger.warn(String.format("Gateway %s did not stop!", gateway.getGatewayId()));
-				return startStatus;
-			}
-			return true;
+			shouldStop = (getStatus() == Status.Started) || (gateway.getStatus() == AbstractGateway.Status.Started);
 		}
+		if (shouldStop)
+		{
+			logger.info("Stopping gateway: " + gateway.getGatewayId());
+			boolean startStatus = gateway.stop();
+			if (!startStatus) logger.warn(String.format("Gateway %s did not stop!", gateway.getGatewayId()));
+			return startStatus;
+		}
+		return true;
 	}
 
 	public AbstractGateway getGatewayById(String id)
@@ -670,13 +678,13 @@ public class Service
 			CommPortIdentifier portId = portList.nextElement();
 			if (portId.getPortType() == CommPortIdentifier.PORT_SERIAL)
 			{
-				System.out.println(String.format("====== Found port: %-5s", portId.getName()));
+				logger.info(String.format("====== Found port: %-5s", portId.getName()));
 				for (int i = 0; i < bauds.length; i++)
 				{
 					SerialPort serialPort = null;
 					InputStream inStream = null;
 					OutputStream outStream = null;
-					System.out.print(String.format(">> Trying at %6d...", bauds[i]));
+					logger.info(String.format(">> Trying at %6d...", bauds[i]));
 					try
 					{
 						int c;
@@ -707,7 +715,7 @@ public class Service
 						{
 							try
 							{
-								System.out.print("  Getting Info...");
+								logger.info("  Getting Info...");
 								outStream.write('A');
 								outStream.write('T');
 								outStream.write('+');
@@ -723,25 +731,25 @@ public class Service
 									response += (char) c;
 									c = inStream.read();
 								}
-								System.out.println(" Found: " + response.replaceAll("\\s+OK\\s+", "").replaceAll("\n", "").replaceAll("\r", ""));
+								logger.info(" Found: " + response.replaceAll("\\s+OK\\s+", "").replaceAll("\n", "").replaceAll("\r", ""));
 							}
 							catch (Exception e)
 							{
-								System.out.println("No device...");
+								logger.info("No device...");
 							}
 						}
 						else
 						{
-							System.out.println("No device...");
+							logger.info("No device...");
 						}
 					}
 					catch (Exception e)
 					{
-						System.out.print("No device...");
+						logger.info("No device...");
 						Throwable cause = e;
 						while (cause.getCause() != null)
 							cause = cause.getCause();
-						System.out.println(" (" + cause.getMessage() + ")");
+						logger.info(" (" + cause.getMessage() + ")");
 					}
 					finally
 					{
@@ -752,7 +760,7 @@ public class Service
 				}
 			}
 		}
-		System.out.println("\nTest complete.");
+		logger.info("Test complete.");
 	}
 
 	public static void main(String[] args)

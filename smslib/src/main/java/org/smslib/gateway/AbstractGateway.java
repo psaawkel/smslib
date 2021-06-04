@@ -237,6 +237,11 @@ public abstract class AbstractGateway
 		return (getStatus() == Status.Stopped);
 	}
 
+	final public void error() {
+		this.stop();
+		this.status = Status.Error;
+	}
+
 	final public boolean send(OutboundMessage message) throws Exception
 	{
 		boolean acquiredLock = false;
@@ -385,6 +390,10 @@ public abstract class AbstractGateway
 		this.status = status;
 		Status newStatus = this.status;
 		Service.getInstance().getCallbackManager().registerGatewayStatusEvent(this, oldStatus, newStatus);
+	}
+
+	protected void _error() {
+		this.setStatus(Status.Error);
 	}
 
 	protected IOutboundQueue<OutboundMessage> getMessageQueue()

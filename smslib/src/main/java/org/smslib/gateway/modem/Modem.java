@@ -13,6 +13,7 @@ import org.smslib.core.Capabilities;
 import org.smslib.core.Capabilities.Caps;
 import org.smslib.core.Coverage;
 import org.smslib.core.CreditBalance;
+import org.smslib.core.Settings;
 import org.smslib.gateway.AbstractGateway;
 import org.smslib.gateway.modem.DeviceInformation.Modes;
 import org.smslib.gateway.modem.driver.AbstractModemDriver;
@@ -42,6 +43,8 @@ public class Modem extends AbstractGateway
 	MsIsdn smscNumber;
 
 	MessageReader messageReader;
+
+	ModemScheduler modemScheduler;
 
 	HashSet<String> readMessagesSet;
 
@@ -86,6 +89,14 @@ public class Modem extends AbstractGateway
 			this.modemDriver.initializeModem();
 			this.messageReader = new MessageReader(this);
 			this.messageReader.start();
+			this.modemScheduler = new ModemScheduler(this);
+			this.modemScheduler.addTask(new ModemSchedulerTask(this, Settings.modemRssiPollingInterval) {
+				@Override
+				protected void execute() throws Exception {
+					this.modem.refreshRssi();
+				}
+			});
+			this.modemScheduler.start();
 			logger.info(String.format("Gateway: %s: %s, SL:%s, SIG: %s / %s", toShortString(), getDeviceInformation(), this.modemDriver.getMemoryLocations(), this.modemDriver.getSignature(true), this.modemDriver.getSignature(false)));
 		}
 	}
@@ -100,6 +111,12 @@ public class Modem extends AbstractGateway
 				this.messageReader.cancel();
 				this.messageReader.join();
 				this.messageReader = null;
+			}
+			if (this.modemScheduler != null)
+			{
+				this.modemScheduler.cancel();
+				this.modemScheduler.join();
+				this.modemScheduler = null;
 			}
 			this.modemDriver.closePort();
 		}
@@ -140,6 +157,14 @@ public class Modem extends AbstractGateway
 		synchronized (this.modemDriver._LOCK_)
 		{
 			this.modemDriver.refreshDeviceInformation();
+		}
+	}
+
+	public void refreshRssi() throws Exception
+	{
+		synchronized (this.modemDriver._LOCK_)
+		{
+			this.modemDriver.refreshRssi();
 		}
 	}
 

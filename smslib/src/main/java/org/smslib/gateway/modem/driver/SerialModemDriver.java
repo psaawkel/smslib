@@ -56,14 +56,31 @@ public class SerialModemDriver extends AbstractModemDriver implements SerialPort
 	@Override
 	public void closePort() throws IOException, InterruptedException
 	{
-		logger.debug("Closing comm port: " + getPortInfo());
-		this.pollReader.cancel();
-		this.pollReader.join();
-		this.in.close();
-		this.in = null;
-		this.out.close();
-		this.out = null;
-		this.serialPort.close();
+		try {
+			logger.debug("Closing comm port: " + getPortInfo());
+			if(this.pollReader!=null){
+				this.pollReader.cancel();
+				try {
+					this.pollReader.join();
+				} catch (InterruptedException ex) {
+					logger.error("PollReader closing exception: {}");
+				}
+			}
+			if(in!=null){
+				this.in.close();
+				this.in = null;
+			}
+			if(out!=null){
+				this.out.close();
+				this.out = null;
+			}
+			if(serialPort!=null){
+				this.serialPort.close();
+				this.serialPort = null;
+			}
+		} catch (Exception e) {
+			logger.error("Closing port exception:\n{}",e);
+		}
 	}
 
 	@Override

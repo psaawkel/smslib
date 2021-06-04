@@ -276,6 +276,8 @@ public abstract class AbstractModemDriver
 				catch (Exception e)
 				{
 					logger.error(e.getMessage(), e);
+					//this.cancel();
+					modem.error();
 				}
 				try
 				{
@@ -378,6 +380,10 @@ public abstract class AbstractModemDriver
 		this.modem.getDeviceInformation().setSerialNo(atGetSerialNo().getResponseData());
 		this.modem.getDeviceInformation().setImsi(atGetImsi().getResponseData());
 		this.modem.getDeviceInformation().setSwVersion(atGetSWVersion().getResponseData());
+		this.refreshRssi();
+	}
+
+	public void refreshRssi() throws Exception {
 		String s = atGetSignalStrengh().getResponseData();
 		if (this.responseOk)
 		{

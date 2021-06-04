@@ -74,6 +74,8 @@ public class MessageReader extends Thread
 				catch (Exception e)
 				{
 					logger.error("Unhandled exception!", e);
+					//this.cancel();
+					modem.error();
 				}
 			}
 			if (!this.shouldCancel)
