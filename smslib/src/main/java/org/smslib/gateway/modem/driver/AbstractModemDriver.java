@@ -9,6 +9,8 @@ import java.io.StringReader;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
@@ -26,7 +28,7 @@ public abstract class AbstractModemDriver
 {
 	static Logger logger = LoggerFactory.getLogger(AbstractModemDriver.class);
 
-	public Object _LOCK_ = new Object();
+    public Lock lock = new ReentrantLock();
 
 	Properties modemProperties;
 
@@ -80,12 +82,14 @@ public abstract class AbstractModemDriver
 
 	public ModemResponse write(String data, boolean skipResponse) throws IOException, TimeoutException, NumberFormatException, InterruptedException
 	{
-		synchronized (this._LOCK_)
-		{
+		this.lock.lock();
+		try{
 			logger.debug(getPortInfo() + " <== " + data);
 			write(data.getBytes());
 			Common.countSheeps(Integer.valueOf(getModemSettings("command_wait_unit")));
 			return (new ModemResponse((skipResponse ? "" : getResponse()), (skipResponse ? true : this.responseOk)));
+		} finally {
+			this.lock.unlock();
 		}
 	}
 
@@ -295,8 +299,8 @@ public abstract class AbstractModemDriver
 	public void initializeModem() throws Exception
 	{
 		int counter = 0;
-		synchronized (this._LOCK_)
-		{
+		this.lock.lock();
+		try {
 			atAT();
 			atAT();
 			atAT();
@@ -370,6 +374,8 @@ public abstract class AbstractModemDriver
 			atCnmiOff();
 			retrieveMemoryLocations();
 			refreshDeviceInformation();
+		} finally {
+			this.lock.unlock();
 		}
 	}
 

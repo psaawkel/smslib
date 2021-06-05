@@ -56,8 +56,8 @@ public class MessageReader extends Thread
 			{
 				try
 				{
-					synchronized (this.modem.getModemDriver()._LOCK_)
-					{
+					this.modem.getModemDriver().lock.lock();
+					try {
 						for (int i = 0; i < (this.modem.getModemDriver().getMemoryLocations().length() / 2); i++)
 						{
 							String memLocation = this.modem.getModemDriver().getMemoryLocations().substring((i * 2), (i * 2) + 2);
@@ -69,6 +69,8 @@ public class MessageReader extends Thread
 									processMessage(message);
 							}
 						}
+					} finally {
+						this.modem.getModemDriver().lock.unlock();
 					}
 				}
 				catch (Exception e)

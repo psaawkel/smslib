@@ -15,6 +15,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class ModemScheduler extends Thread
 {
@@ -26,7 +28,7 @@ public class ModemScheduler extends Thread
 
 	boolean shouldCancel = false;
 
-	public Object _LOCK_ = new Object();
+    Lock lock = new ReentrantLock();
 
 	public ModemScheduler(Modem modem)
 	{
@@ -40,9 +42,11 @@ public class ModemScheduler extends Thread
 	}
 
 	public void addTask(ModemSchedulerTask task){
-		synchronized (this._LOCK_)
-		{
+		this.lock.lock();
+		try{
 			scheduledTasks.add(task);
+		} finally {
+			this.lock.unlock();
 		}
 	}
 
@@ -56,14 +60,18 @@ public class ModemScheduler extends Thread
 			{
 				try
 				{
-					synchronized (this.modem.getModemDriver()._LOCK_)
-					{
-						synchronized (this._LOCK_)
-						{
+					this.modem.getModemDriver().lock.lock();
+					try{
+						this.lock.lock();
+						try{
 							for (ModemSchedulerTask t : scheduledTasks){
 								t.tryExecute();
 							}
+						} finally {
+							this.lock.unlock();
 						}
+					} finally {
+						this.modem.getModemDriver().lock.unlock();
 					}
 				}
 				catch (Exception e)

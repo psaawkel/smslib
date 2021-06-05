@@ -83,8 +83,8 @@ public class Modem extends AbstractGateway
 	@Override
 	public void _start() throws Exception
 	{
-		synchronized (this.modemDriver._LOCK_)
-		{
+		this.modemDriver.lock.lock();
+		try {
 			this.modemDriver.openPort();
 			this.modemDriver.initializeModem();
 			this.messageReader = new MessageReader(this);
@@ -98,14 +98,16 @@ public class Modem extends AbstractGateway
 			});
 			this.modemScheduler.start();
 			logger.info(String.format("Gateway: %s: %s, SL:%s, SIG: %s / %s", toShortString(), getDeviceInformation(), this.modemDriver.getMemoryLocations(), this.modemDriver.getSignature(true), this.modemDriver.getSignature(false)));
+		} finally {
+			this.modemDriver.lock.unlock();
 		}
 	}
 
 	@Override
 	public void _stop() throws Exception
 	{
-		synchronized (this.modemDriver._LOCK_)
-		{
+		this.modemDriver.lock.lock();
+		try {
 			if (this.messageReader != null)
 			{
 				this.messageReader.cancel();
@@ -119,6 +121,8 @@ public class Modem extends AbstractGateway
 				this.modemScheduler = null;
 			}
 			this.modemDriver.closePort();
+		} finally {
+			this.modemDriver.lock.unlock();
 		}
 	}
 
@@ -154,17 +158,21 @@ public class Modem extends AbstractGateway
 
 	public void refreshDeviceInfo() throws Exception
 	{
-		synchronized (this.modemDriver._LOCK_)
-		{
+		this.modemDriver.lock.lock();
+		try {
 			this.modemDriver.refreshDeviceInformation();
+		} finally {
+			this.modemDriver.lock.unlock();
 		}
 	}
 
 	public void refreshRssi() throws Exception
 	{
-		synchronized (this.modemDriver._LOCK_)
-		{
+		this.modemDriver.lock.lock();
+		try {
 			this.modemDriver.refreshRssi();
+		} finally {
+			this.modemDriver.lock.unlock();
 		}
 	}
 
@@ -181,8 +189,8 @@ public class Modem extends AbstractGateway
 	@Override
 	public boolean _send(OutboundMessage message) throws Exception
 	{
-		synchronized (this.modemDriver._LOCK_)
-		{
+		this.modemDriver.lock.lock();
+		try {
 			if (getDeviceInformation().getMode() == Modes.PDU)
 			{
 				List<String> pdus = message.getPdus(getSmscNumber(), getNextMultipartReferenceNo(), getRequestDeliveryReport());
@@ -235,14 +243,16 @@ public class Modem extends AbstractGateway
 				}
 			}
 			return (message.getSentStatus() == SentStatus.Sent);
+		} finally {
+			this.modemDriver.lock.unlock();
 		}
 	}
 
 	@Override
 	protected boolean _delete(InboundMessage message) throws Exception
 	{
-		synchronized (this.modemDriver._LOCK_)
-		{
+		this.modemDriver.lock.lock();
+		try {
 			this.readMessagesSet.remove(message.getSignature());
 			if (message.getMemIndex() >= 0) { return this.modemDriver.atDeleteMessage(message.getMemLocation(), message.getMemIndex()).isResponseOk(); }
 			if ((message.getMemIndex() == -1) && (message.getMpMemIndex().length() > 0))
@@ -253,6 +263,8 @@ public class Modem extends AbstractGateway
 				return true;
 			}
 			return false;
+		} finally {
+			this.modemDriver.lock.unlock();
 		}
 	}
 

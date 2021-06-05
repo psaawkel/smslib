@@ -30,6 +30,9 @@ import java.util.ConcurrentModificationException;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.smslib.callback.IDeliveryReportCallback;
@@ -95,7 +98,7 @@ public class Service
 
 	HttpServer httpServer = new HttpServer();
 
-	Object _LOCK_ = new Object();
+    Lock lock = new ReentrantLock();
 
 	ServiceMessageDispatcher serviceMessageDispatcher = null;
 
@@ -139,8 +142,8 @@ public class Service
 	public boolean start()
 	{
 		boolean allStarted = true;
-		synchronized (this._LOCK_)
-		{
+		lock.lock();
+        try {
 			if (getStatus() == Status.Stopped)
 			{
 				logger.info("Service starting...");
@@ -164,15 +167,17 @@ public class Service
 				if (allStarted) logger.info("Service started.");
 				else logger.warn("Service started, but some gateways did not start!");
 			}
-		}
+		} finally {
+            lock.unlock();
+        }
 		return allStarted;
 	}
 
 	public boolean stop()
 	{
 		boolean allStopped = true;
-		synchronized (this._LOCK_)
-		{
+		lock.lock();
+		try {
 			if (getStatus() == Status.Started)
 			{
 				setStatus(Status.Stopping);
@@ -195,6 +200,8 @@ public class Service
 				if (allStopped) logger.info("Service stopped.");
 				else logger.warn("Service stopped, but some gateways did not stop!");
 			}
+		} finally {
+			lock.unlock();
 		}
 		return allStopped;
 	}
@@ -203,8 +210,8 @@ public class Service
 	{
 		try
 		{
-			synchronized (this._LOCK_)
-			{
+			lock.lock();
+			try {
 				if (getStatus() == Status.Stopped)
 				{
 					setStatus(Status.Terminated);
@@ -226,6 +233,8 @@ public class Service
 					}
 					logger.info("Service terminated.");
 				}
+			} finally {
+				lock.unlock();
 			}
 			return true;
 		}
@@ -524,11 +533,13 @@ public class Service
 	public boolean registerGateway(AbstractGateway gateway)
 	{
 		boolean isStarted = false;
-		synchronized (this._LOCK_)
-		{
+		this.lock.lock();
+		try{
 			logger.info("Registering Gateway: " + gateway.toShortString());
 			getGateways().put(gateway.getGatewayId(), gateway);
 			isStarted = getStatus() == Status.Started;
+		} finally {
+			lock.unlock();
 		}
 		if (isStarted)
 		{
@@ -537,9 +548,11 @@ public class Service
 			if (!startStatus)
 			{
 				logger.warn(String.format("Gateway %s did not start!", gateway.getGatewayId()));
-				synchronized (this._LOCK_)
-				{
+				this.lock.lock();
+				try{
 					getGateways().remove(gateway.getGatewayId());
+				} finally {
+					lock.unlock();
 				}
 			}
 			return startStatus;
@@ -551,11 +564,13 @@ public class Service
 	public boolean unregisterGateway(AbstractGateway gateway)
 	{
 		boolean shouldStop = false;
-		synchronized (this._LOCK_)
-		{
+		this.lock.lock();
+		try{
 			logger.info("Unregistering Gateway: " + gateway.toShortString());
 			getGateways().remove(gateway.getGatewayId());
 			shouldStop = (getStatus() == Status.Started) || (gateway.getStatus() == AbstractGateway.Status.Started);
+		} finally {
+			lock.unlock();
 		}
 		if (shouldStop)
 		{

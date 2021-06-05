@@ -3,6 +3,9 @@ package org.smslib.gateway;
 
 import java.util.Random;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.smslib.Service;
@@ -49,7 +52,7 @@ public abstract class AbstractGateway
 
 	Statistics statistics = new Statistics();
 
-	Object _LOCK_ = new Object();
+    Lock lock = new ReentrantLock();
 
 	Semaphore concurrency = null;
 
@@ -164,8 +167,8 @@ public abstract class AbstractGateway
 
 	final public boolean start()
 	{
-		synchronized (this._LOCK_)
-		{
+		this.lock.lock();
+		try {
 			if ((getStatus() == Status.Stopped) || (getStatus() == Status.Error))
 			{
 				try
@@ -195,14 +198,16 @@ public abstract class AbstractGateway
 					setStatus(Status.Error);
 				}
 			}
+		} finally {
+			this.lock.unlock();
 		}
 		return (getStatus() == Status.Started);
 	}
 
 	final public boolean stop()
 	{
-		synchronized (this._LOCK_)
-		{
+		this.lock.lock();
+		try {
 			if ((getStatus() == Status.Started) || (getStatus() == Status.Error))
 			{
 				try
@@ -233,6 +238,8 @@ public abstract class AbstractGateway
 					setStatus(Status.Error);
 				}
 			}
+		} finally {
+			this.lock.unlock();
 		}
 		return (getStatus() == Status.Stopped);
 	}
