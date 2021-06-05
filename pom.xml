@@ -13,7 +13,7 @@
 		<ikvm>ikvm-7.2.4630.5</ikvm>
 		<cloudhopper-smpp.version>5.0.9</cloudhopper-smpp.version>
 		<camel.version>2.12.0</camel.version>
-		<nrjavaserial.version>5.2.1</nrjavaserial.version>
+		<jSerialComm.version>2.7.0</jSerialComm.version>
 	</properties>
 	<prerequisites>
 		<maven>2.2.1</maven>
