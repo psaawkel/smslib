@@ -11,6 +11,11 @@
 	<name>SMSLib - SMSLib</name>
 	<dependencies>
 		<dependency>
+			<groupId>com.fazecast</groupId>
+			<artifactId>jSerialComm</artifactId>
+			<version>2.6.2</version>
+		</dependency>
+		<dependency>
 			<!-- Optional dependency usually for Linux/MacOS - only required during runtime. 1:1 replacement of RXTX but
 			with active community and "hidden" native library loading: https://code.google.com/p/nrjavaserial/ -->
 			<groupId>com.neuronrobotics</groupId>

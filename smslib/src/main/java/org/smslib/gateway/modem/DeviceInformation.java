@@ -6,6 +6,7 @@ import java.util.HashSet;
 
 public class DeviceInformation
 {
+
 	public enum Modes
 	{
 		PDU, TEXT
@@ -113,7 +114,7 @@ public class DeviceInformation
 	{
 		this.encoding = encoding;
 	}
-
+	
 	@Override
 	public String toString()
 	{

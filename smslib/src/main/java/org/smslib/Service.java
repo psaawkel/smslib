@@ -378,17 +378,17 @@ public class Service
 		return messageCount;
 	}
 
-	public int getMasterQueueLoad() throws Exception
+	public int getMasterQueueLoad()
 	{
 		return this.messageQueue.size();
 	}
 
-	public int getGatewayQueueLoad(AbstractGateway gateway) throws Exception
+	public int getGatewayQueueLoad(AbstractGateway gateway)
 	{
 		return (gateway.getQueueLoad());
 	}
 
-	public int getAllQueueLoad() throws Exception
+	public int getAllQueueLoad()
 	{
 		int total = 0;
 		for (AbstractGateway g : getGateways().values())

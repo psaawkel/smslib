@@ -62,6 +62,11 @@ public abstract class AbstractGateway
 
 	int multipartReferenceNo = 0;
 
+	Long lastCommIn = null;
+	Long lastCommOut = null;
+	Long lastUpdated = null;
+	private final Long created;
+
 	Random randomizer = new Random();
 
 	public AbstractGateway(int noOfDispatchers, int concurrencyLevel, String id, String description)
@@ -70,6 +75,7 @@ public abstract class AbstractGateway
 		this.concurrency = new Semaphore(concurrencyLevel, true);
 		setGatewayId(id);
 		setDescription(description);
+		created = System.currentTimeMillis();
 	}
 
 	public AbstractGateway(int concurrencyLevel, String id, String description)
@@ -78,6 +84,7 @@ public abstract class AbstractGateway
 		this.concurrency = new Semaphore(concurrencyLevel, true);
 		setGatewayId(id);
 		setDescription(description);
+		created = System.currentTimeMillis();
 	}
 
 	public Status getStatus()
@@ -163,6 +170,46 @@ public abstract class AbstractGateway
 	public Statistics getStatistics()
 	{
 		return this.statistics;
+	}
+
+	public void communicationIn() {
+		this.lastCommIn = System.currentTimeMillis();
+	}
+
+	public void communicationOut() {
+		this.lastCommOut = System.currentTimeMillis();
+	}
+
+	public void updated() {
+		this.lastUpdated = System.currentTimeMillis();
+	}
+
+	public Long getLastCommIn() {
+		return lastCommIn;
+	}
+
+	public Long getLastCommOut() {
+		return lastCommOut;
+	}
+
+	public Long getLastUpdated() {
+		return lastUpdated;
+	}
+
+	public Long getTimeCreated() {
+		return created;
+	}
+
+	public Long getUptimeS() {
+		return (System.currentTimeMillis() - created)/1000;
+	}
+
+	public boolean wasActiveSecondsAgo(long secondsAgo) {
+		long now = System.currentTimeMillis();
+		if(lastUpdated==null||lastCommIn==null) return true;
+		if(lastUpdated+secondsAgo*1000>now||lastCommIn+secondsAgo*1000>now){
+			return true;
+		}else return false;
 	}
 
 	final public boolean start()
@@ -372,7 +419,7 @@ public abstract class AbstractGateway
 		return getMessageQueue().add(message);
 	}
 
-	public int getQueueLoad() throws Exception
+	public int getQueueLoad()
 	{
 		return getMessageQueue().size();
 	}

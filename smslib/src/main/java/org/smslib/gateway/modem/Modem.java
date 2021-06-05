@@ -18,6 +18,7 @@ import org.smslib.gateway.AbstractGateway;
 import org.smslib.gateway.modem.DeviceInformation.Modes;
 import org.smslib.gateway.modem.driver.AbstractModemDriver;
 import org.smslib.gateway.modem.driver.IPModemDriver;
+import org.smslib.gateway.modem.driver.JSerialModemDriver;
 import org.smslib.gateway.modem.driver.SerialModemDriver;
 import org.smslib.helper.Common;
 import org.smslib.message.DeliveryReportMessage.DeliveryStatus;
@@ -62,7 +63,7 @@ public class Modem extends AbstractGateway
 		caps.set(Caps.CanRequestDeliveryStatus);
 		setCapabilities(caps);
 		if (isPortAnIpAddress(address)) this.modemDriver = new IPModemDriver(this, address, port);
-		else this.modemDriver = new SerialModemDriver(this, address, port);
+		else this.modemDriver = new JSerialModemDriver(this, address, port);
 		if (!Common.isNullOrEmpty(memoryLocations)) this.modemDriver.setMemoryLocations(memoryLocations);
 		this.simPin = simPin;
 		this.simPin2 = simPin2;

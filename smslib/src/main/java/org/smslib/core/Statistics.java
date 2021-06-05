@@ -59,4 +59,5 @@ public class Statistics
 	{
 		this.totalFailures++;
 	}
+
 }

@@ -21,6 +21,7 @@ import org.smslib.core.Capabilities.Caps;
 import org.smslib.gateway.modem.DeviceInformation.Modes;
 import org.smslib.gateway.modem.Modem;
 import org.smslib.gateway.modem.ModemResponse;
+import org.smslib.gateway.modem.WatchdogUtil;
 import org.smslib.helper.Common;
 import org.smslib.message.MsIsdn;
 
@@ -86,6 +87,7 @@ public abstract class AbstractModemDriver
 		try{
 			logger.debug(getPortInfo() + " <== " + data);
 			write(data.getBytes());
+			modem.communicationOut();
 			Common.countSheeps(Integer.valueOf(getModemSettings("command_wait_unit")));
 			return (new ModemResponse((skipResponse ? "" : getResponse()), (skipResponse ? true : this.responseOk)));
 		} finally {
@@ -131,6 +133,7 @@ public abstract class AbstractModemDriver
 		{
 			String line = getLineFromBuffer();
 			logger.debug(getPortInfo() + " >>> " + line);
+			modem.communicationIn();
 			this.buffer.delete(0, line.length() + 2);
 			if (Common.isNullOrEmpty(line)) continue;
 			if (line.charAt(0) == '^') continue;
@@ -397,6 +400,8 @@ public abstract class AbstractModemDriver
 			StringTokenizer tokens = new StringTokenizer(s1, ",");
 			int rssi = Integer.valueOf(tokens.nextToken().trim());
 			this.modem.getDeviceInformation().setRssi(rssi == 99 ? 99 : (-113 + 2 * rssi));
+			this.modem.updated();
+			WatchdogUtil.announceRssiPolled();
 		}
 	}
 

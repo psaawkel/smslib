@@ -15,5 +15,5 @@ public interface IOutboundQueue<T>
 
 	public T get(int count, TimeUnit timeUnit) throws Exception;
 
-	public int size() throws Exception;
+	public int size();
 }

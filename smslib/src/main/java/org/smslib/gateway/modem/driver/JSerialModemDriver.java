@@ -1,0 +1,116 @@
+
+package org.smslib.gateway.modem.driver;
+
+import com.fazecast.jSerialComm.SerialPort;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.smslib.gateway.modem.Modem;
+import org.smslib.gateway.modem.driver.serial.SerialPortEventListener;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Optional;
+
+public class JSerialModemDriver extends AbstractModemDriver implements SerialPortEventListener
+{
+	@SuppressWarnings("hiding")
+	static Logger logger = LoggerFactory.getLogger(JSerialModemDriver.class);
+
+	String portName;
+
+	int baudRate;
+
+	SerialPort serialPort;
+
+	public JSerialModemDriver(Modem modem, String port, int baudRate)
+	{
+		super(modem);
+		this.portName = port;
+		this.baudRate = baudRate;
+	}
+
+	@Override
+	public void openPort() throws NumberFormatException, IOException
+	{
+		Optional<SerialPort> o = Arrays.asList(SerialPort.getCommPorts()).stream().filter(p->portName.equals(p.getSystemPortName())).findFirst();
+		SerialPort comPort = null;
+		if(o.isPresent()){
+			comPort = o.get();
+		}else{
+			throw new IOException("Port not found on system");
+		}
+		comPort.setBaudRate(baudRate);
+		comPort.openPort();
+		try {
+			while (true)
+			{
+				while (comPort.bytesAvailable() == 0)
+					Thread.sleep(20);
+
+				byte[] readBuffer = new byte[comPort.bytesAvailable()];
+				int numRead = comPort.readBytes(readBuffer, readBuffer.length);
+				System.out.println("Read " + numRead + " bytes.");
+			}
+		} catch (Exception e) { e.printStackTrace(); }
+		comPort.closePort();
+
+
+		this.in = comPort.getInputStream();
+		this.out = comPort.getOutputStream();
+		this.serialPort.setSerialPortParams(this.baudRate, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
+		this.serialPort.setInputBufferSize(Integer.valueOf(getModemSettings("port_buffer")));
+		this.serialPort.setOutputBufferSize(Integer.valueOf(getModemSettings("port_buffer")));
+		this.serialPort.enableReceiveThreshold(2);
+		this.serialPort.enableReceiveTimeout(Integer.valueOf(getModemSettings("timeout")));
+		this.serialPort.notifyOnDataAvailable(true);
+		this.serialPort.addEventListener(this);
+		if (getModemSettings("flowcontrol").equalsIgnoreCase("INOUT")) this.serialPort.setFlowControlMode(SerialPort.FLOWCONTROL_RTSCTS_IN | SerialPort.FLOWCONTROL_RTSCTS_OUT);
+		else if (getModemSettings("flowcontrol").equalsIgnoreCase("IN")) this.serialPort.setFlowControlMode(SerialPort.FLOWCONTROL_RTSCTS_IN);
+		else if (getModemSettings("flowcontrol").equalsIgnoreCase("OUT")) this.serialPort.setFlowControlMode(SerialPort.FLOWCONTROL_RTSCTS_OUT);
+		this.pollReader = new PollReader();
+		this.pollReader.start();
+	}
+
+	@Override
+	public void closePort() throws IOException, InterruptedException
+	{
+		try {
+			logger.debug("Closing comm port: " + getPortInfo());
+			if(this.pollReader!=null){
+				this.pollReader.cancel();
+				try {
+					this.pollReader.join();
+				} catch (InterruptedException ex) {
+					logger.error("PollReader closing exception: {}");
+				}
+			}
+			if(in!=null){
+				this.in.close();
+				this.in = null;
+			}
+			if(out!=null){
+				this.out.close();
+				this.out = null;
+			}
+			if(serialPort!=null){
+				this.serialPort.close();
+				this.serialPort = null;
+			}
+		} catch (Exception e) {
+			logger.error("Closing port exception:\n{}",e);
+		}
+	}
+
+	@Override
+	public String getPortInfo()
+	{
+		return this.portName + ":" + this.baudRate;
+	}
+
+	@Override
+	public void serialEvent(SerialPortEvent event)
+	{
+		int eventType = event.getEventType();
+		if (eventType == SerialPortEvent.DATA_AVAILABLE) this.pollReader.interrupt();
+	}
+}
