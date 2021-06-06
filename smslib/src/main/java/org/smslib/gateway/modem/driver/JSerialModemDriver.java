@@ -38,7 +38,8 @@ public class JSerialModemDriver extends AbstractModemDriver
 		}else{
 			throw new IOException("Port not found on system");
 		}
-		serialPort.setBaudRate(baudRate);
+		serialPort.setComPortParameters(baudRate, 8, SerialPort.ONE_STOP_BIT, SerialPort.NO_PARITY);
+		serialPort.setFlowControl(SerialPort.FLOW_CONTROL_RTS_ENABLED | SerialPort.FLOW_CONTROL_CTS_ENABLED);
 		serialPort.openPort();
 		this.in = serialPort.getInputStream();
 		this.out = serialPort.getOutputStream();

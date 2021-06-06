@@ -153,7 +153,9 @@ public class OutboundMessage extends AbstractMessage
 
 	public String getOperatorMessageId()
 	{
-		return this.operatorMessageIds.get(0);
+		if(this.operatorMessageIds!=null&&this.operatorMessageIds.size()>0)
+			return this.operatorMessageIds.get(0);
+		else return "";
 	}
 
 	public List<String> getOperatorMessageIds()

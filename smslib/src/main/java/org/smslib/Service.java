@@ -20,14 +20,11 @@
 
 package org.smslib;
 
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.concurrent.locks.Lock;
@@ -49,8 +46,6 @@ import org.smslib.core.Settings;
 import org.smslib.core.Statistics;
 import org.smslib.crypto.KeyManager;
 import org.smslib.gateway.AbstractGateway;
-import org.smslib.gateway.modem.driver.serial.CommPortIdentifier;
-import org.smslib.gateway.modem.driver.serial.SerialPort;
 import org.smslib.groups.Group;
 import org.smslib.groups.GroupManager;
 import org.smslib.helper.Common;
@@ -684,100 +679,6 @@ public class Service
 		return this.keyManager;
 	}
 
-	public static void testCommPorts() throws Exception
-	{
-		int bauds[] = { 9600, 14400, 19200, 28800, 33600, 38400, 56000, 57600, 115200 };
-		Enumeration<CommPortIdentifier> portList = CommPortIdentifier.getPortIdentifiers();
-		while (portList.hasMoreElements())
-		{
-			CommPortIdentifier portId = portList.nextElement();
-			if (portId.getPortType() == CommPortIdentifier.PORT_SERIAL)
-			{
-				logger.info(String.format("====== Found port: %-5s", portId.getName()));
-				for (int i = 0; i < bauds.length; i++)
-				{
-					SerialPort serialPort = null;
-					InputStream inStream = null;
-					OutputStream outStream = null;
-					logger.info(String.format(">> Trying at %6d...", bauds[i]));
-					try
-					{
-						int c;
-						String response;
-						serialPort = portId.open("SMSLibCommTester", 5000);
-						serialPort.setFlowControlMode(SerialPort.FLOWCONTROL_RTSCTS_IN);
-						serialPort.setSerialPortParams(bauds[i], SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
-						inStream = serialPort.getInputStream();
-						outStream = serialPort.getOutputStream();
-						serialPort.enableReceiveTimeout(1000);
-						c = inStream.read();
-						while (c != -1)
-							c = inStream.read();
-						outStream.write('A');
-						outStream.write('T');
-						outStream.write('\r');
-						Thread.sleep(1000);
-						response = "";
-						StringBuilder sb = new StringBuilder();
-						c = inStream.read();
-						while (c != -1)
-						{
-							sb.append((char) c);
-							c = inStream.read();
-						}
-						response = sb.toString();
-						if (response.indexOf("OK") >= 0)
-						{
-							try
-							{
-								logger.info("  Getting Info...");
-								outStream.write('A');
-								outStream.write('T');
-								outStream.write('+');
-								outStream.write('C');
-								outStream.write('G');
-								outStream.write('M');
-								outStream.write('M');
-								outStream.write('\r');
-								response = "";
-								c = inStream.read();
-								while (c != -1)
-								{
-									response += (char) c;
-									c = inStream.read();
-								}
-								logger.info(" Found: " + response.replaceAll("\\s+OK\\s+", "").replaceAll("\n", "").replaceAll("\r", ""));
-							}
-							catch (Exception e)
-							{
-								logger.info("No device...");
-							}
-						}
-						else
-						{
-							logger.info("No device...");
-						}
-					}
-					catch (Exception e)
-					{
-						logger.info("No device...");
-						Throwable cause = e;
-						while (cause.getCause() != null)
-							cause = cause.getCause();
-						logger.info(" (" + cause.getMessage() + ")");
-					}
-					finally
-					{
-						if (inStream != null) inStream.close();
-						if (outStream != null) outStream.close();
-						if (serialPort != null) serialPort.close();
-					}
-				}
-			}
-		}
-		logger.info("Test complete.");
-	}
-
 	public static void main(String[] args)
 	{
 		System.out.println(Settings.LIBRARY_INFO);
@@ -795,7 +696,6 @@ public class Service
 			System.out.println();
 			System.out.println("Running port autodetection / diagnostics...");
 			System.out.println();
-			testCommPorts();
 		}
 		catch (Exception e)
 		{
